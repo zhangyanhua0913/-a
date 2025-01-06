@@ -1,2 +1,612 @@
 # -a
 解析主页所有视频的文案，解析短视频链接，提取文案，支持并发批量，速度超快，准确率超高
+接口文档
+
+本接口支持提取本地音视频文件及抖音主页所有视频的文案，同时支持单链接提取文案，覆盖二十多个常见平台。所有提取的文案均经过格式化处理，采用最新的大语言模型，准确率极高，无论是国内外语言，还是国内各地方言，均可高效处理。接口响应速度快，定价合理，使用便捷，支持高并发调用，可广泛应用于各类场景。我们还提供了丰富的程序模板，助您快速打造专属产品。
+
+密钥Key购买渠道 
+
+接口地址
+POST https://api2.92k.fun/fetchs-videos_zhuye
+
+功能描述
+返回的视频结果顺序是从前往后，最新的就是第一个；
+根据用户提供的主页链接，提取指定数量的视频链接。每次请求最少消耗 10 个积分。比如说你请求了15个，那么就消耗的10个积分，不是按照个数算的，是按照区间算的。
+请求20个，也是消耗的10个积分，
+请求30个，也就是消耗20个积分，
+
+请求参数
+参数名
+类型
+必填
+描述
+extract_count
+int
+是
+需要提取的视频数量个数。
+device_identifier
+string
+是
+密钥key 
+home_link
+string
+是
+用户主页链接（仅支持抖音，后续支持快手、小红书等）。
+
+请求示例
+{
+  "extract_count": 5,
+  "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo",
+  "home_link": "https://www.douyin.com/user/MS4wLjABAAAANHP1mMBt21lgn7ThBHII4rxlzsFb6OwVKuNPeSrw_uqXA4sSYV1J1A_SyaSPZ9lp?from_tab_name=main&vid=7436569894923095307"
+}
+
+返回参数
+参数名
+类型
+描述
+nickname
+string
+博主昵称。
+remaining_points
+int
+剩余积分。
+xiaohao
+int
+本次请求消耗的积分。
+num
+int
+实际提取的视频数量。
+videos
+list
+提取的视频链接列表，包含标题和视频链接。
+
+返回示例
+{
+  "nickname": "抖音用户",
+  "remaining_points": 90,
+  "xiaohao": 10,
+  "num": 5,
+  "videos": [
+    {
+      "title": "视频标题1",
+      "videoSrc": "https://www.douyin.com/video/123456789"
+    },
+    {
+      "title": "视频标题2",
+      "videoSrc": "https://www.douyin.com/video/987654321"
+    }
+  ]
+}
+
+
+---
+
+2. 主页视频链接提取并转文案接口
+接口地址
+POST https://api2.92k.fun/fetchs-videos_zhuye_wa
+
+功能描述
+根据用户提供的主页链接，提取指定数量的视频链接，并对每个视频进行音频转文案处理。每次请求消耗 10 个积分，转文案按视频时长消耗额外积分。
+主页解析视频按照区间计算规则[请求20个，也是消耗的10个积分，请求30个，也就是消耗20个积分]
+其次每个视频转文案也是消耗积分，按照视频长度算，每分钟扣1个积分
+示例：比如说你要提取主页下15个视频，每个视频都是1分钟，那么共计扣积分 10+15 =25积分
+
+请求参数
+参数名
+类型
+必填
+描述
+extract_count
+int
+是
+需要提取的视频数量个数，如果全部提取，那就输入一个很大的数字即可，比如某人主页下有800多个，输入1000即可
+device_identifier
+string
+是
+密钥key 
+home_link
+string
+是
+用户主页链接（抖音、快手、小红书等）。
+#主页提取文案较慢，比如说主页下有10个视频，每个都在2分钟，那么全部提取完毕需要3分钟左右，每个链接提取大概需要20秒左右提取出文案。在请求时，一定要加入等待超时时间，参考最后的示例代码
+#如果请求量大，请一定要预估自己的剩余积分，以免因为积分不足而提取不全，半途而废
+请求示例
+{
+  "extract_count": 3,
+  "device_identifier": "sk-dfefeiskdfsldkfjeialdfjeldfeifaodfkdfje",
+  "home_link": "https://www.douyin.com/user/MS4wLjABAAAANHP1mMBt21lgn7ThBHII4rxlzsFb6OwVKuNPeSrw_uqXA4sSYV1J1A_SyaSPZ9lp?from_tab_name=main&vid=7436569894923095307"
+}
+
+返回参数
+参数名
+类型
+描述
+nickname
+string
+博主昵称。
+remaining_points
+int
+剩余积分。
+num
+int
+实际提取的视频数量。
+total
+int
+总视频数量。
+processed
+int
+成功转文案的视频数量。
+videos
+
+list
+
+视频列表，包含标题、视频链接、文案内容等。
+text_content
+str
+提取的原文
+srt_content
+str
+STR格式
+formatted_text
+str
+排版后的格式
+
+返回示例
+{
+    "video_links": {
+        "nickname": "博主昵称",
+        "remaining_points": 80,    // 剩余积分
+        "num": 10,                // 视频总数
+        "total": 10,              // 总视频数
+        "processed": 10,          // 成功处理数量
+        "videos": [
+            {
+                "sequence_number": 1,
+                "title": "视频标题",
+                "videoSrc": "无水印视频链接",
+                "text_content": "原始文本",
+                "srt_content": "SRT字幕格式文本",
+                "formatted_text": "格式化后的文本",
+                "duration_minutes": 2,"本条视频时长"
+                "status": "success"
+            }
+            // ... 更多视频
+        ]
+    }
+}
+
+
+---
+
+3. 单视频链接解析接口
+接口地址
+POST https://api2.92k.fun/watermarke/parses_DZP
+
+功能描述
+解析单个视频链接，返回视频标题、视频链接、封面链接、图集信息等。每次请求消耗 1 个积分。
+
+请求参数
+参数名
+类型
+必填
+描述
+link
+string
+是
+需要解析的视频链接。
+device_identifier
+string
+是
+密钥key 
+
+请求示例
+{
+  "link": "https://www.douyin.com/video/123456789",
+  "device_identifier": "sk-dfeildfeifejfieflakdjfeioflkdfjoeiflaskdfjaldlfe"
+}
+
+返回参数
+参数名
+类型
+描述
+title
+string
+视频标题。
+videoSrc
+string
+视频链接。
+imageAtlas
+list
+图集信息（如果有）。
+imageSrc
+string
+视频封面链接。
+remaining_points
+int
+剩余积分。
+
+返回示例
+{
+  "title": "视频标题",
+  "videoSrc": "https://www.douyin.com/video/123456789",
+  "imageAtlas": [
+    {
+      "imageSrc": "https://www.douyin.com/image/123456789"
+    }
+  ],
+  "imageSrc": "https://www.douyin.com/cover/123456789",
+  "remaining_points": 99
+}
+
+
+---
+
+4. 单视频链接解析并转文案接口
+接口地址
+POST https://api2.92k.fun/watermarke/parses_DZP_wa
+
+功能描述
+解析单个视频链接，并返回视频标题、视频链接、封面链接、图集信息以及文案内容。转文案只按视频时长消耗积分。
+示例：1分钟的视频消耗1个积分，1分30秒不足2分钟的消耗2个积分
+
+请求参数
+参数名
+类型
+必填
+描述
+link
+string
+是
+需要解析的视频链接。
+device_identifier
+string
+是
+密钥key 
+
+请求示例
+{
+  "link": "https://www.douyin.com/video/123456789",
+  "device_identifier": "sk-dffjijfekfjiufefkasjfiejflaskjfeiofaksdfjiefjasfd"
+}
+
+返回参数
+参数名
+类型
+描述
+title
+string
+视频标题。
+videoSrc
+string
+视频链接。
+imageAtlas
+list
+图集信息（如果有）。
+imageSrc
+string
+视频封面链接。
+remaining_points
+int
+剩余积分。
+text_content
+string
+文案内容（纯文本格式）。
+srt_content
+string
+文案内容（SRT 格式）。
+formatted_text
+string
+文案内容（格式化文本）。
+duration_minutes
+int
+视频时长（分钟）。
+
+返回示例
+{
+  "title": "视频标题",
+  "videoSrc": "https://www.douyin.com/video/123456789",
+  "imageAtlas": [
+    {
+      "imageSrc": "https://www.douyin.com/image/123456789"
+    }
+  ],
+  "imageSrc": "https://www.douyin.com/cover/123456789",
+  "remaining_points": 98,
+  "text_content": "这是视频的文案内容...",
+  "srt_content": "1\n00:00:00,000 --> 00:00:10,000\n这是视频的文案内容...",
+  "formatted_text": "这是视频的文案内容...",
+  "duration_minutes": 2
+}
+
+
+---
+
+注意事项
+1. 积分消耗：
+  - 每个接口调用都会消耗积分，具体消耗值见接口描述。
+  - 积分不足时，接口会返回错误信息。
+  
+2. 错误处理：
+  - 如果请求失败，接口会返回 HTTP 状态码和错误信息，例如：
+{
+  "detail": "积分不足：您的积分已用完"
+}
+
+3. 请求频率：
+  - 请合理控制请求频率，避免频繁调用导致积分快速消耗。
+
+5. 音频/视频等本地文件提取文案
+     马上上线
+
+
+
+请求示例代码
+
+
+
+---
+
+1. /fetchs-videos_zhuye 请求示例
+
+使用 requests 库（同步请求）
+import requests
+
+url = "https://api2.92k.fun/fetchs-videos_zhuye"
+payload = {
+    "extract_count": 5,
+    "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo",
+    "home_link": "https://www.douyin.com/user/MS4wLjABAAAANHP1mMBt21lgn7ThBHII4rxlzsFb6OwVKuNPeSrw_uqXA4sSYV1J1A_SyaSPZ9lp?from_tab_name=main&vid=7436569894923095307"
+}
+
+print("主页提取文案需要时间，请耐心等待...")
+try:
+    response = requests.post(url, json=payload, timeout=50000)  # 设置超时时间为 50000 秒
+    if response.status_code == 200:
+        print("请求成功！")
+        print(response.json())
+    else:
+        print(f"请求失败，状态码：{response.status_code}")
+        print(response.json())
+except requests.Timeout:
+    print("请求超时，请检查网络连接或稍后重试。")
+except Exception as e:
+    print(f"请求发生错误：{e}")
+
+使用 httpx 库（异步请求）
+import httpx
+import asyncio
+
+async def fetch_videos():
+    url = "https://api2.92k.fun/fetchs-videos_zhuye"
+    payload = {
+        "extract_count": 5,
+        "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo",
+        "home_link": "https://www.douyin.com/user/MS4wLjABAAAANHP1mMBt21lgn7ThBHII4rxlzsFb6OwVKuNPeSrw_uqXA4sSYV1J1A_SyaSPZ9lp?from_tab_name=main&vid=7436569894923095307"
+    }
+
+    print("主页提取文案需要时间，请耐心等待...")
+    try:
+        async with httpx.AsyncClient(timeout=50000) as client:  # 设置超时时间为 50000 秒
+            response = await client.post(url, json=payload)
+            if response.status_code == 200:
+                print("请求成功！")
+                print(response.json())
+            else:
+                print(f"请求失败，状态码：{response.status_code}")
+                print(response.json())
+    except httpx.Timeout:
+        print("请求超时，请检查网络连接或稍后重试。")
+    except Exception as e:
+        print(f"请求发生错误：{e}")
+
+asyncio.run(fetch_videos())
+
+
+---
+
+2. /fetchs-videos_zhuye_wa 请求示例
+
+使用 requests 库（同步请求）
+import requests
+
+url = "https://api2.92k.fun/fetchs-videos_zhuye_wa"
+payload = {
+    "extract_count": 3,
+    "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo",
+    "home_link": "https://www.douyin.com/user/MS4wLjABAAAANHP1mMBt21lgn7ThBHII4rxlzsFb6OwVKuNPeSrw_uqXA4sSYV1J1A_SyaSPZ9lp?from_tab_name=main&vid=7436569894923095307"
+}
+
+print("主页提取文案需要时间，请耐心等待...")
+try:
+    response = requests.post(url, json=payload, timeout=50000)  # 设置超时时间为 50000 秒
+    if response.status_code == 200:
+        print("请求成功！")
+        print(response.json())
+    else:
+        print(f"请求失败，状态码：{response.status_code}")
+        print(response.json())
+except requests.Timeout:
+    print("请求超时，请检查网络连接或稍后重试。")
+except Exception as e:
+    print(f"请求发生错误：{e}")
+
+使用 httpx 库（异步请求）
+import httpx
+import asyncio
+
+async def fetch_videos_with_captions():
+    url = "https://api2.92k.fun/fetchs-videos_zhuye_wa"
+    payload = {
+        "extract_count": 3,
+        "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo",
+        "home_link": "https://www.douyin.com/user/MS4wLjABAAAANHP1mMBt21lgn7ThBHII4rxlzsFb6OwVKuNPeSrw_uqXA4sSYV1J1A_SyaSPZ9lp?from_tab_name=main&vid=7436569894923095307"
+    }
+
+    print("主页提取文案需要时间，请耐心等待...")
+    try:
+        async with httpx.AsyncClient(timeout=50000) as client:  # 设置超时时间为 50000 秒
+            response = await client.post(url, json=payload)
+            if response.status_code == 200:
+                print("请求成功！")
+                print(response.json())
+            else:
+                print(f"请求失败，状态码：{response.status_code}")
+                print(response.json())
+    except httpx.Timeout:
+        print("请求超时，请检查网络连接或稍后重试。")
+    except Exception as e:
+        print(f"请求发生错误：{e}")
+
+asyncio.run(fetch_videos_with_captions())
+
+
+---
+
+3. /watermarke/parses_DZP 请求示例
+
+使用 requests 库（同步请求）
+import requests
+
+url = "https://api2.92k.fun/watermarke/parses_DZP"
+payload = {
+    "link": "https://www.douyin.com/video/123456789",
+    "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo"
+}
+
+print("主页提取文案需要时间，请耐心等待...")
+try:
+    response = requests.post(url, json=payload, timeout=50000)  # 设置超时时间为 50000 秒
+    if response.status_code == 200:
+        print("请求成功！")
+        print(response.json())
+    else:
+        print(f"请求失败，状态码：{response.status_code}")
+        print(response.json())
+except requests.Timeout:
+    print("请求超时，请检查网络连接或稍后重试。")
+except Exception as e:
+    print(f"请求发生错误：{e}")
+
+使用 httpx 库（异步请求）
+import httpx
+import asyncio
+
+async def parse_video():
+    url = "https://api2.92k.fun/watermarke/parses_DZP"
+    payload = {
+        "link": "https://www.douyin.com/video/123456789",
+        "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo"
+    }
+
+    print("主页提取文案需要时间，请耐心等待...")
+    try:
+        async with httpx.AsyncClient(timeout=50000) as client:  # 设置超时时间为 50000 秒
+            response = await client.post(url, json=payload)
+            if response.status_code == 200:
+                print("请求成功！")
+                print(response.json())
+            else:
+                print(f"请求失败，状态码：{response.status_code}")
+                print(response.json())
+    except httpx.Timeout:
+        print("请求超时，请检查网络连接或稍后重试。")
+    except Exception as e:
+        print(f"请求发生错误：{e}")
+
+asyncio.run(parse_video())
+
+
+---
+
+4. /watermarke/parses_DZP_wa 请求示例
+
+使用 requests 库（同步请求）
+import requests
+
+url = "https://api2.92k.fun/watermarke/parses_DZP_wa"
+payload = {
+    "link": "https://www.douyin.com/video/123456789",
+    "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo"
+}
+
+print("主页提取文案需要时间，请耐心等待...")
+try:
+    response = requests.post(url, json=payload, timeout=50000)  # 设置超时时间为 50000 秒
+    if response.status_code == 200:
+        print("请求成功！")
+        print(response.json())
+    else:
+        print(f"请求失败，状态码：{response.status_code}")
+        print(response.json())
+except requests.Timeout:
+    print("请求超时，请检查网络连接或稍后重试。")
+except Exception as e:
+    print(f"请求发生错误：{e}")
+
+使用 httpx 库（异步请求）
+import httpx
+import asyncio
+
+async def parse_video_with_captions():
+    url = "https://api2.92k.fun/watermarke/parses_DZP_wa"
+    payload = {
+        "link": "https://www.douyin.com/video/123456789",
+        "device_identifier": "sk-xfafemcaksjdfsldfkifealsadfegadfasdfdkfeo"
+    }
+
+    print("主页提取文案需要时间，请耐心等待...")
+    try:
+        async with httpx.AsyncClient(timeout=50000) as client:  # 设置超时时间为 50000 秒
+            response = await client.post(url, json=payload)
+            if response.status_code == 200:
+                print("请求成功！")
+                print(response.json())
+            else:
+                print(f"请求失败，状态码：{response.status_code}")
+                print(response.json())
+    except httpx.Timeout:
+        print("请求超时，请检查网络连接或稍后重试。")
+    except Exception as e:
+        print(f"请求发生错误：{e}")
+
+asyncio.run(parse_video_with_captions())
+
+
+---
+
+关键点说明
+1. 超时设置：
+  - timeout=50000 表示请求的超时时间为 50000 秒，确保长时间任务不会因超时中断。
+  - 如果任务完成时间较短，可以适当减少超时时间。
+
+---
+
+注意事项
+1. 替换参数：
+  - 如果需要替换其他参数（如 link），可以直接修改 payload 中的值。
+  
+2. 异步请求：
+  - 异步请求需要使用 asyncio.run() 来运行异步函数。
+
+3. 错误处理：
+  - 如果请求失败，请检查返回的状态码和错误信息，确保参数正确且积分充足。
+
+
+以上是更新后的代码示例，开发者可以直接使用或根据需求进一步调整。
+
+
+---
+常见错误码：
+400：积分不足
+406：key不对
+407：key有误
+500：服务器内部错误
+注意事项
+所有接口都需要传入Key
+积分不足时将无法使用服务
+建议在调用接口前先检查剩余积分
+批量解析接口建议控制提取数量，避免积分消耗过快
+
+---
+
+以上是四个接口的详细文档，开发者可以根据需求选择合适的接口进行调用。
