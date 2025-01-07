@@ -8,10 +8,11 @@
 
 ---
 
-## 密钥 Key 渠道
+## 密钥 Key 渠道   http://shop.92k.fun/
 
 请联系客服获取密钥 Key。   客服微信：baihuaabd
-购买地址：http://shop.92k.fun/
+购买渠道：http://shop.92k.fun/
+
 ---
 
 ## 接口列表
